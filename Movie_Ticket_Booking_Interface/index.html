@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CinePass - Premium Movie Booking Experience</title>
+  
+  <!-- Bootstrap 5.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    /* ==========================================
+       CUSTOM STYLING & ANIMATIONS
+       ========================================== */
+    :root {
+      --primary-accent: #e50914;
+      --bg-dark: #0f1015;
+      --card-bg: #181a20;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e4e6eb;
+      overflow-x: hidden;
+    }
+
+    /* Smooth Scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2c303e;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-accent);
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      backdrop-filter: blur(12px);
+      background: rgba(15, 16, 21, 0.85) !important;
+      transition: all 0.3s ease;
+    }
+    .nav-link {
+      font-weight: 500;
+      transition: color 0.2s ease-in-out;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--primary-accent) !important;
+    }
+
+    /* Hero Carousel Banner */
+    .hero-banner {
+      height: 440px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .hero-overlay {
+      background: linear-gradient(180deg, rgba(15,16,21,0.2) 0%, rgba(15,16,21,0.95) 100%);
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 3rem;
+    }
+    .glass-card {
+      background: rgba(24, 26, 32, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Movie Card Styling */
+    .movie-card {
+      background-color: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease;
+    }
+    .movie-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(229, 9, 20, 0.3);
+      border-color: rgba(229, 9, 20, 0.5);
+    }
+    .card-poster-wrapper {
+      position: relative;
+      overflow: hidden;
+      height: 360px;
+    }
+    .card-poster-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .movie-card:hover .card-poster-wrapper img {
+      transform: scale(1.08);
+    }
+    .play-trailer-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+    .movie-card:hover .play-trailer-btn {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* Seat Picker Modal */
+    .seat {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background-color: #2a2e3d;
+      color: #a0a5b5;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+    .seat:hover:not(.occupied) {
+      background-color: #3d4358;
+      color: #fff;
+      transform: scale(1.1);
+    }
+    .seat.selected {
+      background-color: var(--primary-accent) !important;
+      color: #fff !important;
+      box-shadow: 0 0 12px rgba(229, 9, 20, 0.8);
+    }
+    .seat.occupied {
+      background-color: #15171e;
+      color: #3f4454;
+      cursor: not-allowed;
+      border: 1px dashed #2c303e;
+    }
+    .screen-indicator {
+      border-top: 3px solid var(--primary-accent);
+      box-shadow: 0 -8px 16px rgba(229, 9, 20, 0.4);
+      letter-spacing: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================
+       1. NAVIGATION BAR (FULLY CLICKABLE)
+       ========================================== -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top border-bottom border-secondary border-opacity-25">
+    <div class="container-fluid px-lg-5">
+      <a class="navbar-brand fw-bold text-danger fs-3 d-flex align-items-center gap-2" href="#">
+        <i class="bi bi-film fs-2"></i> CinePass
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 mx-lg-auto">
+          <li class="nav-item"><a class="nav-link active" href="#movies">Movies</a></li>
+          <li class="nav-item"><a class="nav-link" href="#theatres">Theatres</a></li>
+          <li class="nav-item"><a class="nav-link" href="#offers">Offers</a></li>
+          <li class="nav-item"><a class="nav-link" href="#bookings">My Bookings</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <div class="input-group">
+            <input type="text" id="searchInput" class="form-control bg-dark text-light border-secondary" placeholder="Search movies...">
+            <button class="btn btn-outline-danger" type="button"><i class="bi bi-search"></i></button>
+          </div>
+          <button class="btn btn-danger position-relative px-3" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+            <i class="bi bi-ticket-perforated-fill fs-5"></i>
+            <span id="cartCountBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==========================================
+       2. CAROUSEL FOR PROMOTIONS / TRENDING BANNERS
+       ========================================== -->
+  <section class="container-fluid px-0 mb-5">
+    <div id="promoCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="0" class="active"></button>
+        <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="1"></button>
+        <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="2"></button>
+      </div>
+      <div class="carousel-inner">
+        <!-- Slide 1 -->
+        <div class="carousel-item active hero-banner" style="background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1600&q=80');">
+          <div class="hero-overlay">
+            <div class="container">
+              <div class="glass-card p-4 rounded-4 col-lg-6">
+                <span class="badge bg-danger mb-2 px-3 py-2 fs-6">Blockbuster Festive Offer</span>
+                <h1 class="fw-bold text-white mb-2">Flat 50% Off On Weekend Tickets!</h1>
+                <p class="text-light-50 mb-3">Book using code <strong>FESTIVE50</strong> and get complimentary snacks at selected IMAX theatres.</p>
+                <a href="#movies" class="btn btn-danger px-4 py-2 fw-semibold">Book Now</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Slide 2 -->
+        <div class="carousel-item hero-banner" style="background-image: url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1600&q=80');">
+          <div class="hero-overlay">
+            <div class="container">
+              <div class="glass-card p-4 rounded-4 col-lg-6">
+                <span class="badge bg-warning text-dark mb-2 px-3 py-2 fs-6">IMAX 3D Experience</span>
+                <h1 class="fw-bold text-white mb-2">Cyber Neon 2088 - Advance Booking</h1>
+                <p class="text-light-50 mb-3">Experience hyper-realistic visuals and Dolby Atmos surround sound.</p>
+                <button class="btn btn-danger px-4 py-2 fw-semibold" onclick="openBookingModal(1)">Reserve Seats</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Slide 3 -->
+        <div class="carousel-item hero-banner" style="background-image: url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1600&q=80');">
+          <div class="hero-overlay">
+            <div class="container">
+              <div class="glass-card p-4 rounded-4 col-lg-6">
+                <span class="badge bg-success mb-2 px-3 py-2 fs-6">CinePass Exclusive</span>
+                <h1 class="fw-bold text-white mb-2">Free Popcorn Combo Meal</h1>
+                <p class="text-light-50 mb-3">Buy 4 or more tickets in a single transaction and receive a gourmet snack voucher instantly.</p>
+                <a href="#offers" class="btn btn-success px-4 py-2 fw-semibold">View Offer Details</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       3. MOVIES & MULTI-FILTERING SECTION
+       ========================================== -->
+  <section id="movies" class="container my-5 pt-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+      <h2 class="fw-bold text-white border-start border-4 border-danger ps-3 mb-3 mb-md-0">Now Showing</h2>
+      <div class="text-secondary small">Explore movies, trailers, ratings, and instant ticket reservations.</div>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="row g-3 bg-secondary bg-opacity-10 p-3 rounded-4 mb-4 align-items-center border border-secondary border-opacity-10">
+      <div class="col-6 col-md-3">
+        <label class="form-label text-secondary small fw-semibold">Genre</label>
+        <select id="filterGenre" class="form-select bg-dark text-light border-secondary">
+          <option value="all">All Genres</option>
+          <option value="Action">Action</option>
+          <option value="Sci-Fi">Sci-Fi</option>
+          <option value="Drama">Drama</option>
+          <option value="Animation">Animation</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label text-secondary small fw-semibold">Language</label>
+        <select id="filterLanguage" class="form-select bg-dark text-light border-secondary">
+          <option value="all">All Languages</option>
+          <option value="English">English</option>
+          <option value="Hindi">Hindi</option>
+          <option value="Spanish">Spanish</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label text-secondary small fw-semibold">Min Rating</label>
+        <select id="filterRating" class="form-select bg-dark text-light border-secondary">
+          <option value="0">All Ratings</option>
+          <option value="8.0">8.0+ Stars</option>
+          <option value="8.5">8.5+ Stars</option>
+          <option value="9.0">9.0+ Stars</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label text-secondary small fw-semibold">Max Price ($)</label>
+        <input type="range" id="filterPrice" class="form-range" min="10" max="25" step="1" value="25">
+        <div class="d-flex justify-content-between small text-muted">
+          <span>$10</span>
+          <span id="priceValue" class="text-danger fw-bold">$25</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Movie Cards Grid -->
+    <div id="movieGrid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+      <!-- Generated Dynamically via JS -->
+    </div>
+  </section>
+
+  <!-- ==========================================
+       4. THEATRES SECTION
+       ========================================== -->
+  <section id="theatres" class="container my-5 pt-5 border-top border-secondary border-opacity-25">
+    <h2 class="fw-bold text-white border-start border-4 border-danger ps-3 mb-4">Partner Theatres</h2>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card bg-secondary bg-opacity-10 border-secondary border-opacity-25 rounded-4 p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold text-white mb-0">CinePass IMAX Luxe</h5>
+            <span class="badge bg-danger">4K 3D</span>
+          </div>
+          <p class="text-muted small mb-3"><i class="bi bi-geo-alt"></i> Downtown Plaza, 5th Avenue</p>
+          <span class="text-success small fw-semibold"><i class="bi bi-check-circle"></i> Recliner Seating • Dolby Atmos</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-secondary bg-opacity-10 border-secondary border-opacity-25 rounded-4 p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold text-white mb-0">PVR Grand Multiplex</h5>
+            <span class="badge bg-primary">4DX</span>
+          </div>
+          <p class="text-muted small mb-3"><i class="bi bi-geo-alt"></i> City Center Mall, West Wing</p>
+          <span class="text-success small fw-semibold"><i class="bi bi-check-circle"></i> Motion Seats • Food Court</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-secondary bg-opacity-10 border-secondary border-opacity-25 rounded-4 p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold text-white mb-0">Star Cinema ScreenX</h5>
+            <span class="badge bg-warning text-dark">270° Screen</span>
+          </div>
+          <p class="text-muted small mb-3"><i class="bi bi-geo-alt"></i> Sunset Boulevard, Block C</p>
+          <span class="text-success small fw-semibold"><i class="bi bi-check-circle"></i> Panoramic Viewing • Gourmet Menu</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       5. OFFERS SECTION
+       ========================================== -->
+  <section id="offers" class="container my-5 pt-5 border-top border-secondary border-opacity-25">
+    <h2 class="fw-bold text-white border-start border-4 border-danger ps-3 mb-4">Promotions & Discounts</h2>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="p-4 rounded-4 bg-gradient bg-danger bg-opacity-10 border border-danger border-opacity-25 d-flex align-items-center gap-3">
+          <i class="bi bi-credit-card-2-front fs-1 text-danger"></i>
+          <div>
+            <h5 class="fw-bold text-white mb-1">Bank Cashback Offer</h5>
+            <p class="text-muted small mb-0">Get up to 20% instant cashback on checkout using HDFC or Chase Credit Cards.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="p-4 rounded-4 bg-gradient bg-warning bg-opacity-10 border border-warning border-opacity-25 d-flex align-items-center gap-3">
+          <i class="bi bi-gift fs-1 text-warning"></i>
+          <div>
+            <h5 class="fw-bold text-white mb-1">Buy 1 Get 1 Free</h5>
+            <p class="text-muted small mb-0">Valid on all Tuesday evening shows across partner multiplexes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       6. MY BOOKINGS SECTION
+       ========================================== -->
+  <section id="bookings" class="container my-5 pt-5 border-top border-secondary border-opacity-25">
+    <h2 class="fw-bold text-white border-start border-4 border-danger ps-3 mb-4">My Confirmed Tickets</h2>
+    <div id="bookingHistoryContainer" class="p-4 rounded-4 bg-secondary bg-opacity-10 border border-secondary border-opacity-25">
+      <p class="text-muted text-center mb-0">No past bookings found. Reserve tickets now to view them here!</p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       7. CONTACT SECTION
+       ========================================== -->
+  <section id="contact" class="container my-5 pt-5 border-top border-secondary border-opacity-25">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 text-center">
+        <h2 class="fw-bold text-white mb-2">Need Assistance?</h2>
+        <p class="text-muted mb-4">Have questions regarding refunds, show timings, or group bookings? Reach out to us!</p>
+        <form class="row g-3 text-start" onsubmit="event.preventDefault(); alert('Thank you for contacting CinePass! We will respond shortly.');">
+          <div class="col-md-6">
+            <input type="text" class="form-control bg-dark text-light border-secondary" placeholder="Your Name" required>
+          </div>
+          <div class="col-md-6">
+            <input type="email" class="form-control bg-dark text-light border-secondary" placeholder="Your Email" required>
+          </div>
+          <div class="col-12">
+            <textarea class="form-control bg-dark text-light border-secondary" rows="4" placeholder="Your Message" required></textarea>
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-danger px-5 py-2 fw-semibold">Send Message</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       8. MODALS & OFFCANVAS (DYNAMIC CONTROLS)
+       ========================================== -->
+       
+  <!-- Movie Details & Seat Picker Modal -->
+  <div class="modal fade" id="movieModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content bg-dark border-secondary">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title fw-bold text-white" id="modalTitle">Movie Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-5">
+              <img id="modalPoster" src="" class="img-fluid rounded-3 shadow" alt="Poster">
+            </div>
+            <div class="col-md-7">
+              <div class="d-flex gap-2 mb-2">
+                <span id="modalGenre" class="badge bg-danger"></span>
+                <span id="modalLanguage" class="badge bg-secondary"></span>
+              </div>
+              <p class="text-warning fw-bold mb-2"><i class="bi bi-star-fill"></i> <span id="modalRating"></span> / 10</p>
+              <p class="small text-light mb-2"><strong>Cast:</strong> <span id="modalCast" class="text-muted"></span></p>
+              <p class="small text-light mb-3"><strong>Synopsis:</strong> <span id="modalSynopsis" class="text-muted"></span></p>
+
+              <hr class="border-secondary my-3">
+
+              <!-- Timing Options -->
+              <h6 class="fw-bold text-white mb-2"><i class="bi bi-clock"></i> Select Show Timing:</h6>
+              <div class="btn-group mb-3 w-100" role="group">
+                <input type="radio" class="btn-check" name="timeRadio" id="t1" checked>
+                <label class="btn btn-outline-danger btn-sm" for="t1">12:30 PM</label>
+                <input type="radio" class="btn-check" name="timeRadio" id="t2">
+                <label class="btn btn-outline-danger btn-sm" for="t2">04:15 PM</label>
+                <input type="radio" class="btn-check" name="timeRadio" id="t3">
+                <label class="btn btn-outline-danger btn-sm" for="t3">08:00 PM</label>
+              </div>
+
+              <!-- Interactive Seat Map -->
+              <h6 class="fw-bold text-white mb-2"><i class="bi bi-grid-3x3-gap"></i> Choose Seats:</h6>
+              <div class="screen-indicator mb-3 text-center text-muted small pt-1 fs-7">CINEMA SCREEN THIS WAY</div>
+              <div id="seatMap" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
+                <!-- Dynamic Seats Generated Here -->
+              </div>
+              <div class="d-flex justify-content-around text-muted small">
+                <span><i class="bi bi-square-fill text-secondary"></i> Available</span>
+                <span><i class="bi bi-square-fill text-danger"></i> Selected</span>
+                <span><i class="bi bi-square-fill text-dark border"></i> Occupied</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button id="addToCartBtn" type="button" class="btn btn-danger px-4">Confirm & Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trailer Player Modal -->
+  <div class="modal fade" id="trailerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content bg-dark border-0">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold text-white" id="trailerTitle">Movie Trailer</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="stopTrailer()"></button>
+        </div>
+        <div class="modal-body p-0 ratio ratio-16x9">
+          <iframe id="trailerIframe" src="" allowfullscreen allow="autoplay"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Cart Offcanvas -->
+  <div class="offcanvas offcanvas-end bg-dark text-light border-start border-secondary" tabindex="-1" id="cartOffcanvas">
+    <div class="offcanvas-header border-bottom border-secondary">
+      <h5 class="offcanvas-title fw-bold"><i class="bi bi-cart3"></i> Your Ticket Cart</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column justify-content-between">
+      <div id="cartItemsList" class="overflow-auto">
+        <!-- Dynamic Cart Contents -->
+      </div>
+      <div class="border-top border-secondary pt-3">
+        <div class="d-flex justify-content-between mb-1 text-muted">
+          <span>Subtotal:</span>
+          <span id="cartSubtotal">$0.00</span>
+        </div>
+        <div class="d-flex justify-content-between mb-1 text-muted">
+          <span>Booking Fee (10%):</span>
+          <span id="cartFee">$0.00</span>
+        </div>
+        <div class="d-flex justify-content-between fs-5 fw-bold text-white mb-3">
+          <span>Total Amount Payable:</span>
+          <span id="cartTotal" class="text-danger">$0.00</span>
+        </div>
+        <button id="checkoutBtn" class="btn btn-danger w-100 py-2 fw-bold" onclick="processCheckout()">Checkout Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-black text-muted py-4 border-top border-secondary border-opacity-25 mt-5">
+    <div class="container text-center">
+      <p class="mb-1">&copy; 2026 CinePass Entertainment Inc. All Rights Reserved.</p>
+      <small>Crafted with Bootstrap 5 & JavaScript</small>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Complete Embedded JS Logic -->
+  <script>
+    // Expanded Movie Database with Trailer Embeds
+    const movies = [
+      {
+        id: 1,
+        title: "Cyber Neon 2088",
+        genre: "Sci-Fi",
+        language: "English",
+        rating: 8.8,
+        price: 18,
+        poster: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=500&q=80",
+        cast: "Keanu R., Zoey D.",
+        synopsis: "In a futuristic dystopian metropolis, a rogue hacker unravels a high-stakes conspiracy that threatens humanity.",
+        trailer: "https://www.youtube.com/embed/d96cjJhvlMA?autoplay=1"
+      },
+      {
+        id: 2,
+        title: "Shadows of the Past",
+        genre: "Drama",
+        language: "Hindi",
+        rating: 8.2,
+        price: 14,
+        poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=500&q=80",
+        cast: "Ranbir K., Alia B.",
+        synopsis: "An emotional, gripping family drama centered on long-lost relatives reuniting under mysterious circumstances.",
+        trailer: "https://www.youtube.com/embed/YoHD9XEInc0?autoplay=1"
+      },
+      {
+        id: 3,
+        title: "The Golden Horizon",
+        genre: "Action",
+        language: "English",
+        rating: 9.1,
+        price: 22,
+        poster: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80",
+        cast: "Tom H., Zendaya C.",
+        synopsis: "An action-packed globe-trotting adventure following legendary treasure hunters across uncharted ruins.",
+        trailer: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+      },
+      {
+        id: 4,
+        title: "Realm of Magic",
+        genre: "Animation",
+        language: "Spanish",
+        rating: 8.6,
+        price: 12,
+        poster: "https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=500&q=80",
+        cast: "Gael G., Penélope C.",
+        synopsis: "A heartwarming animated saga of a young sorceress embarking on a voyage to rescue her enchanted kingdom.",
+        trailer: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+      }
+    ];
+
+    // Global App State
+    let activeMovie = null;
+    let selectedSeats = [];
+    let cart = [];
+    let bookingHistory = [];
+
+    // DOM Elements
+    const movieGrid = document.getElementById('movieGrid');
+    const filterGenre = document.getElementById('filterGenre');
+    const filterLanguage = document.getElementById('filterLanguage');
+    const filterRating = document.getElementById('filterRating');
+    const filterPrice = document.getElementById('filterPrice');
+    const priceValue = document.getElementById('priceValue');
+    const searchInput = document.getElementById('searchInput');
+
+    // Modals
+    const movieModal = new bootstrap.Modal(document.getElementById('movieModal'));
+    const trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
+    const seatMap = document.getElementById('seatMap');
+
+    // Initialize Page
+    document.addEventListener('DOMContentLoaded', () => {
+      renderMovies(movies);
+      setupFilters();
+      setupActiveNavHighlight();
+    });
+
+    // Render Cards Grid
+    function renderMovies(movieList) {
+      movieGrid.innerHTML = '';
+      if (movieList.length === 0) {
+        movieGrid.innerHTML = `
+          <div class="col-12 text-center text-muted my-5">
+            <i class="bi bi-film fs-1"></i>
+            <h5 class="mt-2">No movies found matching your current filter criteria.</h5>
+          </div>`;
+        return;
+      }
+
+      movieList.forEach(movie => {
+        const cardHtml = `
+          <div class="col">
+            <div class="card movie-card h-100 rounded-4 overflow-hidden">
+              <div class="card-poster-wrapper">
+                <img src="${movie.poster}" alt="${movie.title}">
+                <button class="btn btn-danger btn-sm rounded-circle play-trailer-btn p-3 shadow" onclick="playTrailer('${movie.title}', '${movie.trailer}')">
+                  <i class="bi bi-play-fill fs-4"></i>
+                </button>
+                <span class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded-2 small fw-bold">$${movie.price}</span>
+              </div>
+              <div class="card-body d-flex flex-column justify-content-between p-3">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-secondary bg-opacity-50 text-light border border-secondary">${movie.genre}</span>
+                    <span class="text-warning small fw-bold"><i class="bi bi-star-fill"></i> ${movie.rating}</span>
+                  </div>
+                  <h5 class="card-title text-white fw-bold mb-1">${movie.title}</h5>
+                  <p class="text-muted small mb-3">${movie.language}</p>
+                </div>
+                <div class="d-grid gap-2">
+                  <button class="btn btn-outline-light btn-sm" onclick="playTrailer('${movie.title}', '${movie.trailer}')">
+                    <i class="bi bi-youtube text-danger"></i> Watch Trailer
+                  </button>
+                  <button class="btn btn-danger btn-sm fw-semibold" onclick="openBookingModal(${movie.id})">
+                    <i class="bi bi-ticket-perforated"></i> Book Tickets
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        movieGrid.innerHTML += cardHtml;
+      });
+    }
+
+    // Filter Logic
+    function setupFilters() {
+      const applyFilters = () => {
+        const genre = filterGenre.value;
+        const lang = filterLanguage.value;
+        const minRating = parseFloat(filterRating.value);
+        const maxPrice = parseFloat(filterPrice.value);
+        const searchQuery = searchInput.value.toLowerCase().trim();
+
+        priceValue.textContent = `$${maxPrice}`;
+
+        const filtered = movies.filter(m => {
+          const matchGenre = genre === 'all' || m.genre === genre;
+          const matchLang = lang === 'all' || m.language === lang;
+          const matchRating = m.rating >= minRating;
+          const matchPrice = m.price <= maxPrice;
+          const matchSearch = m.title.toLowerCase().includes(searchQuery);
+
+          return matchGenre && matchLang && matchRating && matchPrice && matchSearch;
+        });
+
+        renderMovies(filtered);
+      };
+
+      filterGenre.addEventListener('change', applyFilters);
+      filterLanguage.addEventListener('change', applyFilters);
+      filterRating.addEventListener('change', applyFilters);
+      filterPrice.addEventListener('input', applyFilters);
+      searchInput.addEventListener('input', applyFilters);
+    }
+
+    // Trailer Modal Controls
+    function playTrailer(title, embedUrl) {
+      document.getElementById('trailerTitle').textContent = `${title} - Official Trailer`;
+      document.getElementById('trailerIframe').src = embedUrl;
+      trailerModal.show();
+    }
+
+    function stopTrailer() {
+      document.getElementById('trailerIframe').src = '';
+    }
+
+    // Booking Modal & Seat Grid Setup
+    function openBookingModal(movieId) {
+      activeMovie = movies.find(m => m.id === movieId);
+      selectedSeats = [];
+
+      document.getElementById('modalTitle').textContent = activeMovie.title;
+      document.getElementById('modalPoster').src = activeMovie.poster;
+      document.getElementById('modalGenre').textContent = activeMovie.genre;
+      document.getElementById('modalLanguage').textContent = activeMovie.language;
+      document.getElementById('modalRating').textContent = activeMovie.rating;
+      document.getElementById('modalCast').textContent = activeMovie.cast;
+      document.getElementById('modalSynopsis').textContent = activeMovie.synopsis;
+
+      // Construct Seat Layout Matrix
+      seatMap.innerHTML = '';
+      const rows = ['A', 'B', 'C', 'D'];
+      rows.forEach(row => {
+        for (let i = 1; i <= 6; i++) {
+          const seatId = `${row}${i}`;
+          const isOccupied = (movieId + i) % 4 === 0; 
+          const seatEl = document.createElement('div');
+          seatEl.className = `seat ${isOccupied ? 'occupied' : ''}`;
+          seatEl.textContent = seatId;
+
+          if (!isOccupied) {
+            seatEl.addEventListener('click', () => toggleSeat(seatEl, seatId));
+          }
+          seatMap.appendChild(seatEl);
+        }
+      });
+
+      movieModal.show();
+    }
+
+    function toggleSeat(seatEl, seatId) {
+      if (selectedSeats.includes(seatId)) {
+        selectedSeats = selectedSeats.filter(s => s !== seatId);
+        seatEl.classList.remove('selected');
+      } else {
+        selectedSeats.push(seatId);
+        seatEl.classList.add('selected');
+      }
+    }
+
+    // Cart Interactions
+    document.getElementById('addToCartBtn').addEventListener('click', () => {
+      if (selectedSeats.length === 0) {
+        alert('Please pick at least one seat before proceeding!');
+        return;
+      }
+
+      const selectedTime = document.querySelector('input[name="timeRadio"]:checked + label').textContent;
+      const cartItem = {
+        movieId: activeMovie.id,
+        title: activeMovie.title,
+        price: activeMovie.price,
+        seats: [...selectedSeats],
+        time: selectedTime,
+        total: activeMovie.price * selectedSeats.length
+      };
+
+      cart.push(cartItem);
+      updateCartUI();
+      movieModal.hide();
+    });
+
+    function updateCartUI() {
+      const cartList = document.getElementById('cartItemsList');
+      const cartBadge = document.getElementById('cartCountBadge');
+      cartList.innerHTML = '';
+
+      let subtotal = 0;
+      let ticketCount = 0;
+
+      if (cart.length === 0) {
+        cartList.innerHTML = `<p class="text-muted text-center my-5">Your cart is empty.</p>`;
+      } else {
+        cart.forEach((item, idx) => {
+          subtotal += item.total;
+          ticketCount += item.seats.length;
+
+          cartList.innerHTML += `
+            <div class="card bg-secondary bg-opacity-25 border-secondary mb-3 p-3 rounded-3">
+              <div class="d-flex justify-content-between align-items-start">
+                <h6 class="fw-bold text-white mb-1">${item.title}</h6>
+                <button class="btn btn-sm text-danger p-0" onclick="removeCartItem(${idx})"><i class="bi bi-trash"></i></button>
+              </div>
+              <p class="small text-muted mb-1"><i class="bi bi-clock"></i> Show: ${item.time}</p>
+              <p class="small text-muted mb-2"><i class="bi bi-grid-3x3-gap"></i> Seats (${item.seats.length}): <span class="text-danger fw-bold">${item.seats.join(', ')}</span></p>
+              <div class="text-end fw-bold text-white">$${item.total.toFixed(2)}</div>
+            </div>
+          `;
+        });
+      }
+
+      const fee = subtotal * 0.10;
+      const total = subtotal + fee;
+
+      cartBadge.textContent = ticketCount;
+      document.getElementById('cartSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('cartFee').textContent = `$${fee.toFixed(2)}`;
+      document.getElementById('cartTotal').textContent = `$${total.toFixed(2)}`;
+    }
+
+    function removeCartItem(index) {
+      cart.splice(index, 1);
+      updateCartUI();
+    }
+
+    // Checkout & Booking Confirmation
+    function processCheckout() {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+
+      bookingHistory.push(...cart);
+      cart = [];
+      updateCartUI();
+      renderBookingHistory();
+
+      alert('🎉 Booking Confirmed! Your tickets have been sent to your email.');
+      
+      const offcanvasEl = bootstrap.Offcanvas.getInstance(document.getElementById('cartOffcanvas'));
+      if(offcanvasEl) offcanvasEl.hide();
+    }
+
+    function renderBookingHistory() {
+      const container = document.getElementById('bookingHistoryContainer');
+      container.innerHTML = '';
+
+      if (bookingHistory.length === 0) {
+        container.innerHTML = `<p class="text-muted text-center mb-0">No past bookings found.</p>`;
+        return;
+      }
+
+      bookingHistory.forEach((item, i) => {
+        container.innerHTML += `
+          <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-3 mb-3">
+            <div>
+              <h6 class="fw-bold text-white mb-1">Ticket #${1000 + i} - ${item.title}</h6>
+              <span class="small text-muted">Seats: ${item.seats.join(', ')} | Timing: ${item.time}</span>
+            </div>
+            <span class="badge bg-success">Confirmed</span>
+          </div>
+        `;
+      });
+    }
+
+    // Highlight Active Nav Link on Scroll
+    function setupActiveNavHighlight() {
+      const sections = document.querySelectorAll('section[id]');
+      window.addEventListener('scroll', () => {
+        const scrollY = window.pageYOffset;
+        sections.forEach(current => {
+          const sectionHeight = current.offsetHeight;
+          const sectionTop = current.offsetTop - 100;
+          const sectionId = current.getAttribute('id');
+          const navLink = document.querySelector(`.navbar-nav a[href*=${sectionId}]`);
+
+          if (navLink) {
+            if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+              navLink.classList.add('active');
+            } else {
+              navLink.classList.remove('active');
+            }
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
